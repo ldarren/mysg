@@ -37,15 +37,15 @@ return {
 		Object.assign(msg,{
 			recipient:{id:user.id},
 			message:{
-				text:`Hi ${user.first_name} ${user.last_name}, who are you?`,
+				text:`Hi ${user.first_name} ${user.last_name}, what is role?`,
 				quick_replies:[{
 					content_type:'text',
 					title:'Passenger',
-					payload:'ROLE_PASSENGER'
+					payload:'passenger'
 				},{
 					content_type:'text',
 					title:'Driver',
-					payload:'ROLE_DRIVER'
+					payload:'driver'
 				}]
 			}
 		})
@@ -56,11 +56,9 @@ return {
 
 		if(!msg || !msg.quick_reply) return next(null,'fb/askRole')
 		switch(msg.quick_reply.payload){
-		case 'ROLE_PASSENGER':
-			user.role='passenger'
-			break
-		case 'ROLE_DRIVER':
-			user.role='driver'
+		case 'passenger':
+		case 'driver':
+			user.role=msg.quick_reply.payload
 			break
 		default: return next(null,'fb/askRole')
 		}
@@ -75,11 +73,19 @@ return {
 			Object.assign(msg,{
 				recipient:{id:user.id},
 				message:{
-					text:`please give me ur action`,
+					text:'How can i help you?',
 					quick_replies:[{
 						content_type:'text',
-						title:'Add Trip',
+						title:'Add new trip',
 						payload:'ADD_TRIP'
+					},{
+						content_type:'text',
+						title:'View my trips',
+						payload:'MY_JOB'
+					},{
+						content_type:'text',
+						title:'Change Role',
+						payload:'CHN_ROLE'
 					}]
 				}
 			})
@@ -87,47 +93,72 @@ return {
 			Object.assign(msg,{
 				recipient:{id:user.id},
 				message:{
-					text:`please give me ur action`,
+					text:'How can i help you?',
 					quick_replies:[{
 						content_type:'text',
-						title:'Search by date',
+						title:'Find trip by time',
+						payload:'FIND_TIME'
+					},{
+						content_type:'text',
+						title:'Find trip by date',
 						payload:'FIND_DATE'
+					},{
+						content_type:'text',
+						title:'View my rides',
+						payload:'MY_RIDE'
+					},{
+						content_type:'text',
+						title:'Change Role',
+						payload:'CHN_ROLE'
 					}]
 				}
 			})
 		}
 		next()
 	},
-	addAction(user,action,evt,name,next){
+	$addAction(user,action,evt,name,next){
 		const msg=evt.message
 		if(!msg || !msg.quick_reply) return next(null,'fb/askAction')
 		action.length=0
 		if ('driver'===user.role){
 			switch(msg.quick_reply.payload){
 			case 'ADD_TRIP':
-				action.push('addtrip')
+				action.push('addTrip')
 				this.set(name,'TripDate')
 				break
+			case 'MY_JOB':
+				action.push('myJob')
+				return next(null, 'fb/compileAction')
+			case 'CHN_ROLE':
+				return next(null,'fb/askRole')
 			default: return next(null,'fb/askAction')
 			}
 		}else{
 			switch(msg.quick_reply.payload){
+			case 'FIND_TIME':
+				action.push('findByTime')
+				this.set(name,'FindTime')
+				break
 			case 'FIND_DATE':
-				action.push('findbydate')
+				action.push('findByDate')
 				this.set(name,'FindDate')
 				break
+			case 'MY_RIDE':
+				action.push('myRide')
+				return next(null, 'fb/compileAction')
+			case 'CHN_ROLE':
+				return next(null,'fb/askRole')
 			default: return next(null,'fb/askAction')
 			}
 		}
 		next()
 	},
 	/*
+	 * TODO: test this step when server crash, can the user command flow continue?
 	 * - list, + end of
 	 */
-	compileAction(user,action,msg,next){
-		const	
-		type=action.shift(),
-		output={type}
+	$compileAction(user,action,cmd,next){
+		cmd['type']=action.shift()
 
 		for(let j=[],v1,k,v; action.length; ){
 			k=action.shift()
@@ -153,22 +184,29 @@ return {
 					v1=j
 					break
 				}
-				output[k.slice(2)]=v1
+				cmd[k.slice(2)]=v1
 				j=[]
 			}
 		}
-		Object.assign(msg,{ recipient: { id:user.id }, message: { text:`Added action: ${JSON.stringify(output)}` } })
-		rdTrip.set(user,output,(err)=>{
-			if (err) console.error(err) // nothing can be done at this step
-			next()
+		action.length=0
+		rdAction.del(user)
+		next(null, `fb/${cmd.type}`)
+	},
+	nextStep(user,action,name,next){
+		action.push(name)
+		rdAction.set(user,action,(err)=>{
+			if (err) return next(this.error(500,err))
+			next(null,`fb/ask${name}`)
+		})
+	},
+	finalStep(user,action,next){
+		rdAction.set(user,action,(err)=>{
+			if (err) return next(this.error(500,err))
+			next(null,'fb/compileAction')
 		})
 	},
 	createMsg(user,msg,text,next){
-		console.log('createMsg params',this.params)
-		Object.assign(msg,{ 
-			recipient: { id:user.id }, 
-			message: { text }
-		})
+		Object.assign(msg,fb.message(fb.text(text)))
 		next()
 	}
 }

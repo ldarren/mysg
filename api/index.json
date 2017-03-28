@@ -4,6 +4,9 @@
 		"fb":"api/fb",
 		"fbGeneral":"api/fbGeneral",
 		"fbAddTrip":"api/fbAddTrip",
+		"fbViewTrip":"api/fbViewTrip",
+		"fbFindTrip":"api/fbFindTrip",
+		"fbJoinTrip":"api/fbJoinTrip",
         "web":["context","webServer"]
     },      
     "routes":{
@@ -23,12 +26,12 @@
 		],
 		"fb/lostAt":[
 			["fb","prepare",["user",":action","name"]],
-			["fb","nextStep","user",":action","name"]
+			["fbGeneral","nextStep","user",":action","name"]
 		],
 		"fb/addUser":[
 			["fb","prepare",["user",":action"]],
 			["fb","getUser","user"],
-			["fb","nextStep","user",":action",["Role"]]
+			["fbGeneral","nextStep","user",":action",["Role"]]
 		],
 		"fb/askRole|#prefix":[
 			["fb","prepare",["user"]],
@@ -38,7 +41,7 @@
 		"fb/addRole":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbGeneral","addRole","user",":action","evt"],
-			["fb","nextStep","user",":action",["Action"]]
+			["fbGeneral","nextStep","user",":action",["Action"]]
 		],
 		"fb/askAction|#prefix":[
 			["fb","prepare",["user"]],
@@ -47,8 +50,8 @@
 		],
 		"fb/addAction":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbGeneral","addAction","user",":action","evt",["name"]],
-			["fb","nextStep","user",":action","name"]
+			["fbGeneral","$addAction","user",":action","evt",["name"]],
+			["fbGeneral","nextStep","user",":action","name"]
 		],
 		"fb/askTripDate|#prefix":[
 			["fb","prepare",["user"]],
@@ -58,7 +61,7 @@
 		"fb/addTripDate":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addDate","user",":action","evt"],
-			["fb","nextStep","user",":action",["TripTime"]]
+			["fbGeneral","nextStep","user",":action",["TripTime"]]
 		],
 		"fb/askTripTime|#prefix":[
 			["fb","prepare",["user"]],
@@ -68,7 +71,7 @@
 		"fb/addTripTime":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addTime","user",":action","evt"],
-			["fb","nextStep","user",":action",["TripFirstPickup"]]
+			["fbGeneral","nextStep","user",":action",["TripFirstPickup"]]
 		],
 		"fb/askTripFirstPickup|#prefix":[
 			["fb","prepare",["user"]],
@@ -78,7 +81,7 @@
 		"fb/addTripFirstPickup":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addPickup","user",":action","evt",["name"]],
-			["fb","nextStep","user",":action","name"]
+			["fbGeneral","nextStep","user",":action","name"]
 		],
 		"fb/askTripPickup|#prefix":[
 			["fb","prepare",["user"]],
@@ -88,7 +91,7 @@
 		"fb/addTripPickup":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addPickup","user",":action","evt",["name"]],
-			["fb","nextStep","user",":action","name"]
+			["fbGeneral","nextStep","user",":action","name"]
 		],
 		"fb/askTripFirstDropoff|#prefix":[
 			["fb","prepare",["user"]],
@@ -98,7 +101,7 @@
 		"fb/addTripFirstDropoff":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addDropoff","user",":action","evt",["name"]],
-			["fb","nextStep","user",":action","name"]
+			["fbGeneral","nextStep","user",":action","name"]
 		],
 		"fb/askTripDropoff|#prefix":[
 			["fb","prepare",["user"]],
@@ -108,7 +111,17 @@
 		"fb/addTripDropoff":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addDropoff","user",":action","evt",["name"]],
-			["fb","nextStep","user",":action","name"]
+			["fbGeneral","nextStep","user",":action","name"]
+		],
+		"fb/askTripSeat|#prefix":[
+			["fb","prepare",["user"]],
+			["fbGeneral","createMsg","user","msg",["Pls specify available seats, e.g. 10"]],
+			["fb","send","msg"]
+		],
+		"fb/addTripSeat":[
+			["fb","prepare",["user",":action","evt"]],
+			["fbAddTrip","addSeat","user",":action","evt"],
+			["fbGeneral","nextStep","user",":action",["TripPrice"]]
 		],
 		"fb/askTripPrice|#prefix":[
 			["fb","prepare",["user"]],
@@ -118,7 +131,7 @@
 		"fb/addTripPrice":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addPrice","user",":action","evt"],
-			["fb","nextStep","user",":action",["TripNote"]]
+			["fbGeneral","nextStep","user",":action",["TripNote"]]
 		],
 		"fb/askTripNote|#prefix":[
 			["fb","prepare",["user"]],
@@ -128,14 +141,26 @@
 		"fb/addTripNote":[
 			["fb","prepare",["user",":action","evt"]],
 			["fbAddTrip","addNote","user",":action","evt"],
-			["fb","finalStep","user",":action"]
+			["fbGeneral","finalStep","user",":action"]
 		],
 		"fb/compileAction":[
 			["fb","prepare",["user",":action"]],
-			["fbGeneral","compileAction","user",":action","msg"],
-			["fb","send","msg"],
-			["util","delay",[5000]],
-			["fb","nextStep","user",":action",["Action"]]
+			["fbGeneral","$compileAction","user",":action","cmd"]
+		],
+		"fb/addTrip":[
+			["fb","prepare",["user","cmd"]],
+			["fbAddTrip","done","user","cmd","msg"],
+			["fb","send","msg"]
+		],
+		"fb/myTrip":[
+			["fb","prepare",["user","cmd"]],
+			["fbViewTrip","myTrip","user","cmd","msg"],
+			["fb","send","msg"]
+		],
+		"fb/myRide":[
+			["fb","prepare",["user","cmd"]],
+			["fbViewTrip","myRide","user","cmd","msg"],
+			["fb","send","msg"]
 		],
 		"fb/trip/cancel":[
 		],

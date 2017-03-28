@@ -5,7 +5,8 @@ MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 timeChecker=new RegExp(/^(0?[1-9]|1[012])[:\.]([0-5]\d)[ap]m$/),
 spaceRM=new RegExp(/\s+/g,''),
 timeSplit=new RegExp(/[:\.]/),
-rdAction=require('redis/action')
+rdAction=require('redis/action'),
+rdTrip=require('redis/trip')
 
 return {
 	setup(context,cb){
@@ -107,7 +108,7 @@ return {
 			switch(v.toLowerCase()){
 			case 'done':
 				action.push('+:dropoff',null)
-				this.set(name,'TripPrice')
+				this.set(name,'TripSeat')
 				break
 			default:
 				action.push('-',v)
@@ -117,6 +118,15 @@ return {
 			break
 		default: return next(null,`fb/ask${a}`)
 		}
+		next()
+	},
+	addSeat(user,action,evt,next){
+		const msg=evt.message
+
+		const a=action.pop()
+		if(!msg || !msg.text) return next(null,`fb/ask${a}`)
+		action.pop()
+		action.push('+$price', msg.text || 'ASK DRIVER')
 		next()
 	},
 	addPrice(user,action,evt,next){
@@ -133,4 +143,17 @@ return {
 		action.push('+$note', msg.text || 'NO REMARK')
 		next()
 	},
+	done(user,cmd,msg,next){
+		rdTrip.set(user,cmd,(err)=>{
+			if (err) Object.assign(msg,{ recipient: { id:user.id }, message: {
+					text:`An error has encountered when adding your trip: ${err}.
+					type help for more action`
+				}})
+			else Object.assign(msg,{ recipient: { id:user.id }, message: { 
+					text:`New trip on ${(new Date(cmd.date)).toLocaleString()} has been added.
+					type help for more action` 
+				}})
+			next()
+		})
+	}
 }
