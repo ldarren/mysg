@@ -2,11 +2,9 @@
     "deps":{
         "util":"api/util",
 		"fb":"api/fb",
-		"fbGeneral":"api/fbGeneral",
-		"fbAddTrip":"api/fbAddTrip",
-		"fbViewTrip":"api/fbViewTrip",
-		"fbFindTrip":"api/fbFindTrip",
-		"fbJoinTrip":"api/fbJoinTrip",
+		"common":"api/common",
+		"addTrip":"api/addTrip",
+		"trip":"api/trip",
         "web":["context","webServer"]
     },      
     "routes":{
@@ -26,140 +24,147 @@
 		],
 		"fb/lostAt":[
 			["fb","prepare",["user",":action","name"]],
-			["fbGeneral","nextStep","user",":action","name"]
+			["common","nextStep","user",":action","name"]
 		],
 		"fb/addUser":[
 			["fb","prepare",["user",":action"]],
 			["fb","getUser","user"],
-			["fbGeneral","nextStep","user",":action",["Role"]]
+			["common","nextStep","user",":action",["Role"]]
 		],
 		"fb/askRole|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","askRole","user","msg"],
+			["common","askRole","user","msg"],
 			["fb","send","msg"]
 		],
 		"fb/addRole":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbGeneral","addRole","user",":action","evt"],
-			["fbGeneral","nextStep","user",":action",["Action"]]
+			["common","addRole","user",":action","evt"],
+			["common","nextStep","user",":action",["Action"]]
 		],
 		"fb/askAction|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","askAction","user","msg"],
+			["common","askAction","user","msg"],
 			["fb","send","msg"]
 		],
 		"fb/addAction":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbGeneral","$addAction","user",":action","evt",["name"]],
-			["fbGeneral","nextStep","user",":action","name"]
+			["common","$addAction","user",":action","evt",["name"]],
+			["common","nextStep","user",":action","name"]
 		],
 		"fb/askTripDate|#prefix":[
 			["fb","prepare",["user"]],
-			["fbAddTrip","askDate","user","msg"],
+			["addTrip","askDate","user","msg"],
 			["fb","send","msg"]
 		],
 		"fb/addTripDate":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addDate","user",":action","evt"],
-			["fbGeneral","nextStep","user",":action",["TripTime"]]
+			["addTrip","addDate","user",":action","evt"],
+			["common","nextStep","user",":action",["TripTime"]]
 		],
 		"fb/askTripTime|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls key in the pick up time in '9:35pm' format"]],
+			["common","createMsg","user","msg",["Pls key in the pick up time in '9:35pm' format"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripTime":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addTime","user",":action","evt"],
-			["fbGeneral","nextStep","user",":action",["TripFirstPickup"]]
+			["addTrip","addTime","user",":action","evt"],
+			["common","nextStep","user",":action",["TripFirstPickup"]]
 		],
 		"fb/askTripFirstPickup|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls add a pick up location"]],
+			["common","createMsg","user","msg",["Pls add a pick up location"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripFirstPickup":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addPickup","user",":action","evt",["name"]],
-			["fbGeneral","nextStep","user",":action","name"]
+			["addTrip","addPickup","user",":action","evt",["name"]],
+			["common","nextStep","user",":action","name"]
 		],
 		"fb/askTripPickup|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls add another pick up location, or type 'done' to proceed"]],
+			["common","createMsg","user","msg",["Pls add another pick up location, or type 'done' to proceed"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripPickup":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addPickup","user",":action","evt",["name"]],
-			["fbGeneral","nextStep","user",":action","name"]
+			["addTrip","addPickup","user",":action","evt",["name"]],
+			["common","nextStep","user",":action","name"]
 		],
 		"fb/askTripFirstDropoff|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls add a drop off location"]],
+			["common","createMsg","user","msg",["Pls add a drop off location"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripFirstDropoff":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addDropoff","user",":action","evt",["name"]],
-			["fbGeneral","nextStep","user",":action","name"]
+			["addTrip","addDropoff","user",":action","evt",["name"]],
+			["common","nextStep","user",":action","name"]
 		],
 		"fb/askTripDropoff|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls add another drop off location, or type 'done' to proceed"]],
+			["common","createMsg","user","msg",["Pls add another drop off location, or type 'done' to proceed"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripDropoff":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addDropoff","user",":action","evt",["name"]],
-			["fbGeneral","nextStep","user",":action","name"]
+			["addTrip","addDropoff","user",":action","evt",["name"]],
+			["common","nextStep","user",":action","name"]
 		],
 		"fb/askTripSeat|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls specify available seats, e.g. 10"]],
+			["common","createMsg","user","msg",["Pls specify available seats, e.g. 10"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripSeat":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addSeat","user",":action","evt"],
-			["fbGeneral","nextStep","user",":action",["TripPrice"]]
+			["common","readTextInputTo",":action","evt",["+$seat","ASK DRIVER"]],
+			["common","nextStep","user",":action",["TripPrice"]]
 		],
 		"fb/askTripPrice|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls add price per pax, e.g. SGD10 pax"]],
+			["common","createMsg","user","msg",["Pls add price per pax, e.g. SGD10 pax"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripPrice":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addPrice","user",":action","evt"],
-			["fbGeneral","nextStep","user",":action",["TripNote"]]
+			["common","readTextInputTo",":action","evt",["+$price","ASK DRIVER"]],
+			["common","nextStep","user",":action",["TripContact"]]
+		],
+		"fb/askTripContact|#prefix":[
+			["fb","prepare",["user"]],
+			["common","createMsg","user","msg",["Pls leave your phone number"]],
+			["fb","send","msg"]
+		],
+		"fb/addTripContact":[
+			["fb","prepare",["user",":action","evt"]],
+			["common","readTextInputTo",":action","evt",["+$contact","NA"]],
+			["common","nextStep","user",":action",["TripNote"]]
 		],
 		"fb/askTripNote|#prefix":[
 			["fb","prepare",["user"]],
-			["fbGeneral","createMsg","user","msg",["Pls add a remarks such as contact info"]],
+			["common","createMsg","user","msg",["Pls add an optional remark"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripNote":[
 			["fb","prepare",["user",":action","evt"]],
-			["fbAddTrip","addNote","user",":action","evt"],
-			["fbGeneral","finalStep","user",":action"]
+			["common","readTextInputTo",":action","evt",["+$note","NA"]],
+			["common","finalStep","user",":action"]
 		],
 		"fb/compileAction":[
 			["fb","prepare",["user",":action"]],
-			["fbGeneral","$compileAction","user",":action","cmd"]
+			["common","$compileAction","user",":action","cmd"]
 		],
 		"fb/addTrip":[
-			["fb","prepare",["user","cmd"]],
-			["fbAddTrip","done","user","cmd","msg"],
+			["addTrip","done","user","cmd","msg"],
 			["fb","send","msg"]
 		],
 		"fb/myTrip":[
-			["fb","prepare",["user","cmd"]],
-			["fbViewTrip","myTrip","user","cmd","msg"],
+			["trip","myTrip","user","cmd","msg"],
 			["fb","send","msg"]
 		],
 		"fb/myRide":[
-			["fb","prepare",["user","cmd"]],
-			["fbViewTrip","myRide","user","cmd","msg"],
+			["trip","myRide","user","cmd","msg"],
 			["fb","send","msg"]
 		],
 		"fb/trip/cancel":[

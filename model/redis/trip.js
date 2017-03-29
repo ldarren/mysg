@@ -26,13 +26,13 @@ tripsInTimeslot=function(key,cb){
 		})
 	})
 },
-scan=function(cursor,match,count,result,cb){
+scan=function(cursor,match,count,output,cb){
 	client.scan(cursor,'MATCH',match,'COUNT',count,(err,result)=>{
 		if (err) return cb(err)
 		const [newCursor,list]=result
-		result.push(...list)
-		if (list.length >= count) return cb(null, newCursor, result)
-		scan(newCursor,match,count-list.length,result,cb)
+		output.push(...list)
+		if (0==newCursor || list.length >= count) return cb(null, newCursor, output)
+		scan(newCursor,match,count-list.length,output,cb)
 	})
 }
 
@@ -74,7 +74,7 @@ module.exports={
 				for(let i=0,l=result.length,r; i<l; i++){
 					r=result[i]
 					if (!r) continue
-					try { output.push(JSON.push(r)) }
+					try { output.push(JSON.parse(r)) }
 					catch(ex) { return cb(ex)}
 				}
 				return cb(null,cursor,output)
@@ -97,7 +97,7 @@ module.exports={
 				for(let i=0,l=result.length,r; i<l; i++){
 					r=result[i]
 					if (!r) continue
-					try { output.push(JSON.push(r)) }
+					try { output.push(JSON.parse(r)) }
 					catch(ex) { return cb(ex)}
 				}
 				return cb(null,cursor,output)

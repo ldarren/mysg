@@ -29,10 +29,6 @@ console.log(`parseEvt user: ${JSON.stringify(user)}`)
 		rdAction.get(evt.sender.id,(err,action)=>{
 			if (err) return cb(err)
 console.log(`parseEvt action: ${JSON.stringify(action)}`)
-			if (!(action && 'Role'===action[0]) && !user.role){
-				sigslot.signal('fb/lostAt','custom',user,action,'Role')
-				return parseEvts(evts,cb)
-			}
 			if (!action || !action.length) {
 				sigslot.signal('fb/lostAt','custom',user,[],'Action')
 				return parseEvts(evts,cb)
@@ -120,72 +116,10 @@ return {
 		const json=JSON.stringify(obj)
 		pico.ajax('POST',URL_MSG,json,HEADERS,(err,state,res)=>{
 			if (4!==state) return
-			if (err) return this.error(`ko send[${json}] error[${JSON.stringify(err)}]`)
+			if (err) return next(this.error(err.code,`ko send[${json}] error[${err.error}]`))
 
 			this.log(`ok send[${json}] res[${res}]`)
 		})
 		next()
-	},
-	message(user,message){
-		return {
-			recipient:{id:user.id},
-			message
-		}
-	},
-	text(payload){ return { text:payload } },
-	attachment(payload){
-		return {
-			attachment:{
-				type:'attachment',
-				payload
-			}
-		}
-	},
-	templateButtons(text,buttons){
-		return {
-			template_type:'button',
-			text,
-			buttons
-		}
-	},
-	templateGeneric(elements){
-		return {
-			template_type:'generic',
-			elements
-		}
-	},
-	templateList(elements,buttons){
-		return {
-			template_type:'list',
-			elements,
-			buttons
-		}
-	},
-	element(title,subtitle,default_action,buttons,image_url){
-		return {
-			title,
-			subtitle,
-			default_action, // default button wo title
-			buttons,
-			image_url
-		}
-	},
-	btnURL(title,url,fallback_url,webview_height_ratio='compact'){
-		return { type:'web_url', title, url, webview_height_ratio, fallback_url }
-	},
-	btnPostback(title, payload){
-		return { type:'postback', title, payload }
-	},
-	btnPhoneNumber(title,payload){
-		return { type:'phone_number', title, payload } 
-	},
-	btnShare(share_contents){
-		return { type:'element_share', share_contents}  
-	},
-	quickTextReply(title,payload,image_url){
-		return { content_type:'text', title, payload, image_url }
-	},
-	quickLocationReply(){
-		return { content_type:'location' }
 	}
 }

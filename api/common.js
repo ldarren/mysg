@@ -1,8 +1,8 @@
 const
-fb=require('api/fb'),
+pObj=pico.export('pico/obj'),
+fb=require('api/fbJSON'),
 rdUser=require('redis/user'),
 rdAction=require('redis/action'),
-rdTrip=require('redis/trip'),
 parseEvt=function(evt){
 	if (evt.message) return parseMsg(evt)
 	if (evt.postback) return parsePostback(evt)
@@ -34,31 +34,25 @@ return {
 		cb()
 	},
 	askRole(user,msg,next){
-		Object.assign(msg,{
-			recipient:{id:user.id},
-			message:{
-				text:`Hi ${user.first_name} ${user.last_name}, what is role?`,
-				quick_replies:[{
-					content_type:'text',
-					title:'Passenger',
-					payload:'passenger'
-				},{
-					content_type:'text',
-					title:'Driver',
-					payload:'driver'
-				}]
-			}
-		})
+		Object.assign(msg,fb.message(
+			user,
+			fb.text(
+				`Hi ${user.first_name} ${user.last_name}, what is your role?`,
+				[
+					fb.quickTextReply('Passenger','passenger'),
+					fb.quickTextReply('Driver','driver')
+				]
+			)
+		))
 		next()
 	},
 	addRole(user,action,evt,next){
-		const msg=evt.message
+		const payload=pObj.dotchain(evt,['message','quick_reply','payload'])
 
-		if(!msg || !msg.quick_reply) return next(null,'fb/askRole')
-		switch(msg.quick_reply.payload){
+		switch(payload){
 		case 'passenger':
 		case 'driver':
-			user.role=msg.quick_reply.payload
+			user.role=payload
 			break
 		default: return next(null,'fb/askRole')
 		}
@@ -70,71 +64,52 @@ return {
 	},
 	askAction(user,msg,next){
 		if ('driver'===user.role){
-			Object.assign(msg,{
-				recipient:{id:user.id},
-				message:{
-					text:'How can i help you?',
-					quick_replies:[{
-						content_type:'text',
-						title:'Add new trip',
-						payload:'ADD_TRIP'
-					},{
-						content_type:'text',
-						title:'View my trips',
-						payload:'MY_JOB'
-					},{
-						content_type:'text',
-						title:'Change Role',
-						payload:'CHN_ROLE'
-					}]
-				}
-			})
+			Object.assign(msg,fb.message(
+				user,
+				fb.text(
+					'How can i help you?',
+					[
+						fb.quickTextReply('Add new trip','ADD_TRIP'),
+						fb.quickTextReply('View my trips','MY_JOB'),
+						fb.quickTextReply('Change Role','CHN_ROLE'),
+					]
+				)
+			))
 		}else{
-			Object.assign(msg,{
-				recipient:{id:user.id},
-				message:{
-					text:'How can i help you?',
-					quick_replies:[{
-						content_type:'text',
-						title:'Find trip by time',
-						payload:'FIND_TIME'
-					},{
-						content_type:'text',
-						title:'Find trip by date',
-						payload:'FIND_DATE'
-					},{
-						content_type:'text',
-						title:'View my rides',
-						payload:'MY_RIDE'
-					},{
-						content_type:'text',
-						title:'Change Role',
-						payload:'CHN_ROLE'
-					}]
-				}
-			})
+			Object.assign(msg,fb.message(
+				user,
+				fb.text(
+					'How can i help you?',
+					[
+						fb.quickTextReply('Find trip by time','FIND_TIME'),
+						fb.quickTextReply('Find trip by date','FIND_DATE'),
+						fb.quickTextReply('View my rides','MY_RIDE'),
+						fb.quickTextReply('Change Role','CHN_ROLE'),
+					]
+				)
+			))
 		}
 		next()
 	},
 	$addAction(user,action,evt,name,next){
-		const msg=evt.message
-		if(!msg || !msg.quick_reply) return next(null,'fb/askAction')
+		const payload=pObj.dotchain(evt,['message','quick_reply','payload'])
+		if(!payload) return next(null,'fb/askAction')
 		action.length=0
 		if ('driver'===user.role){
-			switch(msg.quick_reply.payload){
+			switch(payload){
 			case 'ADD_TRIP':
 				action.push('addTrip')
 				this.set(name,'TripDate')
 				break
 			case 'MY_JOB':
-				action.push('myJob')
+				action.push('myTrip')
 				return next(null, 'fb/compileAction')
 			case 'CHN_ROLE':
 				return next(null,'fb/askRole')
 			default: return next(null,'fb/askAction')
 			}
 		}else{
-			switch(msg.quick_reply.payload){
+			switch(payload){
 			case 'FIND_TIME':
 				action.push('findByTime')
 				this.set(name,'FindTime')
@@ -158,6 +133,7 @@ return {
 	 * - list, + end of
 	 */
 	$compileAction(user,action,cmd,next){
+console.log('$compileAction',JSON.stringify(action))
 		cmd['type']=action.shift()
 
 		for(let j=[],v1,k,v; action.length; ){
@@ -206,7 +182,12 @@ return {
 		})
 	},
 	createMsg(user,msg,text,next){
-		Object.assign(msg,fb.message(fb.text(text)))
+		Object.assign(msg,fb.message(user,fb.text(text)))
+		next()
+	},
+	readTextInputTo(action,evt,key,value,next){
+		action.pop()
+		action.push(key, pObj.dotchain(evt,['message','text'], value))
 		next()
 	}
 }
