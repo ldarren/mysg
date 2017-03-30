@@ -26,6 +26,10 @@
 			["fb","prepare",["user",":action","name"]],
 			["common","nextStep","user",":action","name"]
 		],
+		"fb/postback":[
+			["fb","prepare",["user",":action","evt"]],
+			["common","$postback","user",":action","evt",":postback"]
+		],
 		"fb/addUser":[
 			["fb","prepare",["user",":action"]],
 			["fb","getUser","user"],
@@ -53,12 +57,12 @@
 		],
 		"fb/askTripDate|#prefix":[
 			["fb","prepare",["user"]],
-			["addTrip","askDate","user","msg"],
+			["common","askDate","user","msg",["Add trip on which date?"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripDate":[
 			["fb","prepare",["user",":action","evt"]],
-			["addTrip","addDate","user",":action","evt"],
+			["common","readQuickPayloadTo",":action","evt",["-"]],
 			["common","nextStep","user",":action",["TripTime"]]
 		],
 		"fb/askTripTime|#prefix":[
@@ -68,7 +72,7 @@
 		],
 		"fb/addTripTime":[
 			["fb","prepare",["user",":action","evt"]],
-			["addTrip","addTime","user",":action","evt"],
+			["common","addTime","user",":action","evt",["+@date"]],
 			["common","nextStep","user",":action",["TripFirstPickup"]]
 		],
 		"fb/askTripFirstPickup|#prefix":[
@@ -166,6 +170,50 @@
 		"fb/myRide":[
 			["trip","myRide","user","cmd","msg"],
 			["fb","send","msg"]
+		],
+		"fb/askListDate|#prefix":[
+			["fb","prepare",["user"]],
+			["common","askDate","user","msg",["Find trip on which date?"]],
+			["fb","send","msg"]
+		],
+		"fb/addListDate":[
+			["fb","prepare",["user",":action","evt"]],
+			["common","readQuickPayloadTo",":action","evt",["+@date"]],
+			["common","finalStep","user",":action"]
+		],
+		"fb/askFindDate|#prefix":[
+			["fb","prepare",["user"]],
+			["common","askDate","user","msg",["Find trip on which date?"]],
+			["fb","send","msg"]
+		],
+		"fb/addFindDate":[
+			["fb","prepare",["user",":action","evt"]],
+			["common","readQuickPayloadTo",":action","evt",["-"]],
+			["common","nextStep","user",":action",["FindTime"]]
+		],
+		"fb/askFindTime|#prefix":[
+			["fb","prepare",["user"]],
+			["common","createMsg","user","msg",["and at which time? Pls key it in '9:35pm' format"]],
+			["fb","send","msg"]
+		],
+		"fb/addFindTime":[
+			["fb","prepare",["user",":action","evt"]],
+			["common","addTime","user",":action","evt",["+@date"]],
+			["common","finalStep","user",":action"]
+		],
+		"fb/findByDate":[
+			["trip","findByDate","user","cmd",":trips"],
+			["trip","foundTrips","user",":trips",":msgs"],
+			["fb","spam",":msgs"]
+		],
+		"fb/findByTime":[
+			["trip","findByTime","user","cmd",":trips"],
+			["trip","foundTrips","user",":trips",":msgs"],
+			["fb","spam",":msgs"]
+		],
+		"fb/join":[
+			["trip","join","user",":postback",":msgs"],
+			["fb","spam",":msgs"]
 		],
 		"fb/trip/cancel":[
 		],

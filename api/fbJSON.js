@@ -14,9 +14,9 @@ return {
 			}
 		}
 	},
-	templateButtons(text,buttons){
+	templateButton(text,buttons){
 		console.assert(buttons.length, 'button too few buttons')
-		console.assert(buttons.length<3, 'button too many buttons')
+		console.assert(buttons.length<4, 'button too many buttons')
 
 		return {
 			template_type:'button',

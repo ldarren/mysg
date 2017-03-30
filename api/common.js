@@ -1,32 +1,21 @@
 const
+HOUR1=1000*60*60,
+DAY1=HOUR1*24,
+DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+timeChecker=new RegExp(/^(0?[1-9]|1[012])[:\.]([0-5]\d)[ap]m$/),
+spaceRM=new RegExp(/\s+/g,''),
+timeSplit=new RegExp(/[:\.]/),
 pObj=pico.export('pico/obj'),
 fb=require('api/fbJSON'),
 rdUser=require('redis/user'),
 rdAction=require('redis/action'),
-parseEvt=function(evt){
-	if (evt.message) return parseMsg(evt)
-	if (evt.postback) return parsePostback(evt)
-	console.error('unknown messaging',evt)
-},
-parsePostback=function(evt){
-	const
-	senderId = evt.sender.id,
-	payload = evt.postback.payload
-
-	console.log('%s user %d@%d postback[%s]', (new Date(evt.timestamp)).toLocaleString(), senderId, evt.recipient.id, payload)
-
-	switch(payload){
-	case 'GET_STARTED':
-		sendWhoRU(senderId)
-		break
-	case 'D:ADD_ROUTE':
-		sendTextMsg(senderId, 'Let\'s create a new route, first give me the travel start time at "MM DD YY hh:mm" format. example 19/Mar/2017 6:35pm will be 3 19 17 18:35')
-		break
-	default:
-		console.error('unknown payload',payload)
-		sendWhoRU(senderId)
-		break
-	}
+nextStep=function(user,action,name,next){
+	action.push(name)
+	rdAction.set(user,action,(err)=>{
+		if (err) return next(this.error(500,err))
+		next(null,`fb/ask${name}`)
+	})
 }
 
 return {
@@ -62,6 +51,15 @@ return {
 			next()
 		})
 	},
+	$postback(user,action,evt,postback,next){
+		const payload = pObj.dotchain(evt,['postback','payload'])
+
+		if (!payload) return next(null,'fb/lostAt')
+
+		const [path,...rest]=payload.split(':')
+		postback.push(...rest)
+		next(null,`fb/${path}`)
+	},
 	askAction(user,msg,next){
 		if ('driver'===user.role){
 			Object.assign(msg,fb.message(
@@ -69,9 +67,9 @@ return {
 				fb.text(
 					'How can i help you?',
 					[
-						fb.quickTextReply('Add new trip','ADD_TRIP'),
-						fb.quickTextReply('View my trips','MY_JOB'),
-						fb.quickTextReply('Change Role','CHN_ROLE'),
+						fb.quickTextReply('Add new trip','addTrip'),
+						fb.quickTextReply('View my trips','myTrip'),
+						fb.quickTextReply('Change Role','Role'),
 					]
 				)
 			))
@@ -81,10 +79,10 @@ return {
 				fb.text(
 					'How can i help you?',
 					[
-						fb.quickTextReply('Find trip by time','FIND_TIME'),
-						fb.quickTextReply('Find trip by date','FIND_DATE'),
-						fb.quickTextReply('View my rides','MY_RIDE'),
-						fb.quickTextReply('Change Role','CHN_ROLE'),
+						fb.quickTextReply('Find trip by date','findByDate'),
+						fb.quickTextReply('Find trip by time','findByTime'),
+						fb.quickTextReply('View my rides','myRide'),
+						fb.quickTextReply('Change Role','Role'),
 					]
 				)
 			))
@@ -97,32 +95,32 @@ return {
 		action.length=0
 		if ('driver'===user.role){
 			switch(payload){
-			case 'ADD_TRIP':
-				action.push('addTrip')
+			case 'addTrip':
+				action.push(payload)
 				this.set(name,'TripDate')
 				break
-			case 'MY_JOB':
-				action.push('myTrip')
+			case 'myTrip':
+				action.push(payload)
 				return next(null, 'fb/compileAction')
-			case 'CHN_ROLE':
-				return next(null,'fb/askRole')
+			case 'Role':
+				return nextStep.call(this,user,action,payload,next)
 			default: return next(null,'fb/askAction')
 			}
 		}else{
 			switch(payload){
-			case 'FIND_TIME':
-				action.push('findByTime')
-				this.set(name,'FindTime')
+			case 'findByDate':
+				action.push(payload)
+				this.set(name,'ListDate')
 				break
-			case 'FIND_DATE':
-				action.push('findByDate')
+			case 'findByTime':
+				action.push(payload)
 				this.set(name,'FindDate')
 				break
-			case 'MY_RIDE':
-				action.push('myRide')
+			case 'myRide':
+				action.push(payload)
 				return next(null, 'fb/compileAction')
-			case 'CHN_ROLE':
-				return next(null,'fb/askRole')
+			case 'Role':
+				return nextStep.call(this,user,action,payload,next)
 			default: return next(null,'fb/askAction')
 			}
 		}
@@ -145,7 +143,7 @@ console.log('$compileAction',JSON.stringify(action))
 				if (null !== v) j.push(v);
 				switch(k.charAt(1)){
 				case '@': // date time
-					v1=Date.parse(j.join(' '))
+					v1=Date.parse(j.join(' '))-(user.timezone*HOUR1)
 					break
 				case '.': // string join
 					v1=j.join(' ')
@@ -168,21 +166,51 @@ console.log('$compileAction',JSON.stringify(action))
 		rdAction.del(user)
 		next(null, `fb/${cmd.type}`)
 	},
-	nextStep(user,action,name,next){
-		action.push(name)
-		rdAction.set(user,action,(err)=>{
-			if (err) return next(this.error(500,err))
-			next(null,`fb/ask${name}`)
-		})
-	},
+	nextStep:nextStep,
 	finalStep(user,action,next){
 		rdAction.set(user,action,(err)=>{
 			if (err) return next(this.error(500,err))
 			next(null,'fb/compileAction')
 		})
 	},
+	askDate(user,msg,text,next){
+		const
+		replies=[],
+		now=Date.now()+user.timezone*HOUR1
+
+		for(let i=0,d; i<7; i++){
+			d=new Date((DAY1*i)+now)
+			replies.push(fb.quickTextReply(`${DAYS[d.getDay()]}:${d.getDate()}/${MONTHS[d.getMonth()]}/${d.getFullYear()}`,d.toLocaleDateString()))
+		}
+		Object.assign(msg, fb.message(
+			user,
+			fb.text(text, replies)
+		))
+		next()
+	},
+	//askTime generated by createMsg
+	addTime(user,action,evt,key,next){
+		const text=pObj.dotchain(evt,['message','text'])
+
+		if(!text) return next(null,`fb/ask${action[action.length-1]}`)
+		const txt=text.toLowerCase().replace(spaceRM, '')
+		if (!timeChecker.test(txt)) return next(null,`fb/ask${action[action.length-1]}`)
+		const add='p'===txt.charAt(txt.length-2)?12:0
+		const [hr,min]=txt.slice(0,-2).split(timeSplit)
+		action.pop()
+		action.push(key, (parseInt(hr)+add)+':'+min)
+		next()
+	},
 	createMsg(user,msg,text,next){
 		Object.assign(msg,fb.message(user,fb.text(text)))
+		next()
+	},
+	readQuickPayloadTo(action,evt,key,next){
+		const payload=pObj.dotchain(evt,['message','quick_reply','payload'])
+console.log('readQuickPayloadTo',payload)
+		if(!payload) return next(null,`fb/ask${action[action.length-1]}`)
+		action.pop()
+		action.push(key,payload)
 		next()
 	},
 	readTextInputTo(action,evt,key,value,next){

@@ -59,9 +59,9 @@ module.exports={
 		d=Floor(datetime/DAY1),
 		KEY_DATE=`mysg:td:${d}`
 
-		client.zrangeByScore(KEY_DATE,datetime,datetime+HOUR1,(err,list1)=>{
+		client.zrangebyscore(KEY_DATE,datetime,datetime+HOUR1,(err,list)=>{
 			if (err) return cb(err)
-			tripsInTimeslots(list2.concat(list1),0,[],cb)
+			tripsInTimeslots(list,0,[],cb)
 		})
 	},
 	myTrip(user,limit,cb){
@@ -104,15 +104,28 @@ module.exports={
 			})
 		})
 	},
+	get(id,cb){
+		client.get(`mysg:t:${id}`,(err,json)=>{
+			if (err) return cb(err)
+			try{var trip=JSON.parse(json)}
+			catch(ex){return cb(ex)}
+			cb(null,trip)
+		})
+	},
 	set(user,trip,cb){
 		if (!user.id || !trip.date) return cb('invalid input')
 		const
 		datetime=Floor(trip.date/1000),
 		date=Floor(datetime/DAY1),
 		expireat=datetime+DAY1,
-		KEY_TRIP=`mysg:t:${user.id}:${Date.now()}`,
+		creator=user.id,
+		id=`${creator}-${Date.now()}`,
+		KEY_TRIP=`mysg:t:${id}`,
 		KEY_DATE=`mysg:td:${date}`,
 		KEY_TIME=`mysg:tt:${datetime}`
+
+		trip.creator=creator
+		trip.id=id
 
 		client.batch()
 		.set(KEY_TRIP,JSON.stringify(trip))
@@ -124,16 +137,17 @@ module.exports={
 		.exec(cb)
 	},
 	// key= unixtime:userid
-	join(key,user,trip,cb){
-		if (!key || !user.id || !trip.date) return cb('invalid input')
+	join(user,trip,cb){
+		if (!user.id || !trip.id || !trip.date) return cb('invalid input')
 		const
+		id=trip.id,
 		datetime=Floor(trip.date/1000),
 		expireat=datetime+DAY1
 
 		client.multi()
-		.sadd(`mysg:tr:${key}`,user.id)
+		.sadd(`mysg:tr:${id}`,user.id)
 		.expireat(KEY_TIME,expireat)
-		.set(`mysg:tmr:${user.id}:${Date.now()}`,key,'EX',expireat)
+		.set(`mysg:tmr:${user.id}:${Date.now()}`,id,'EX',expireat)
 		.exec(cb)
 	}
 }

@@ -17,7 +17,7 @@ parseEvts=function(evts,cb){
 	if (!evts.length) return cb()
 	const evt=evts.pop()
 
-	console.log('%s received event: %s', (new Date(evt.timestamp)).toLocaleString(),JSON.stringify(evt))
+	console.log('[%s] received- %s', (new Date(evt.timestamp)).toLocaleString(),JSON.stringify(evt))
 
 	rdUser.get(evt.sender.id,(err,user)=>{
 		if (err) return cb(err)
@@ -33,7 +33,8 @@ console.log(`parseEvt action: ${JSON.stringify(action)}`)
 				sigslot.signal('fb/lostAt','custom',user,[],'Action')
 				return parseEvts(evts,cb)
 			}
-			sigslot.signal(`fb/add${action[action.length-1]}`,'custom',user,action,evt)
+			if (evt.postback) sigslot.signal('fb/postback','custom',user,action,evt)
+			else sigslot.signal(`fb/add${action[action.length-1]}`,'custom',user,action,evt)
 			parseEvts(evts,cb)
 		})
 	})
@@ -46,6 +47,23 @@ queue=function(entries){
 		queuing=false
 		if (err) console.error(err)
 		if (entryQ.length) return queue([]) // print error and requeue
+	})
+},
+send=function(obj,next){
+	const json=JSON.stringify(obj)
+	pico.ajax('POST',URL_MSG,json,HEADERS,(err,state,res)=>{
+		if (4!==state) return
+		if (err) console.log(JSON.stringify(err.src))
+		if (err) return next(this.error(err.code,`ko send[${json}] error[${err.src}]`))
+
+		this.log(`ok send[${json}] res[${res}]`)
+		next()
+	})
+},
+spam=function(self,objs,i,cb){
+	if (i >= objs.length) return cb()
+	send.call(self,objs[i++],()=>{
+		return spam(self,objs,i,cb)
 	})
 }
 
@@ -112,14 +130,8 @@ return {
 			})
 		})
 	},
-	send(obj,next){
-		const json=JSON.stringify(obj)
-		pico.ajax('POST',URL_MSG,json,HEADERS,(err,state,res)=>{
-			if (4!==state) return
-			if (err) return next(this.error(err.code,`ko send[${json}] error[${err.error}]`))
-
-			this.log(`ok send[${json}] res[${res}]`)
-		})
-		next()
+	send:send,
+	spam(objs,next){
+		return spam(this,objs,0,next)
 	}
 }
