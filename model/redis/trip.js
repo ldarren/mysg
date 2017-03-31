@@ -47,7 +47,6 @@ module.exports={
 		const
 		datetime=Floor(date/1000),
 		d=Floor(datetime/DAY1)
-
 		client.zrange(`mysg:td:${d}`,0,-1,(err,list)=>{
 			if (err) return cb(err)
 			tripsInTimeslots(list,0,[],cb)
@@ -65,7 +64,7 @@ module.exports={
 		})
 	},
 	myTrip(user,limit,cb){
-		scan(0,`mysg:t:${user.id}:*`,limit,[],(err,cursor,list)=>{
+		scan(0,`mysg:t:${user.id}-*`,limit,[],(err,cursor,list)=>{
 			if (err) return cb(err)
 			if (!list || !list.length) return cb(null, cursor, list)
 			client.send_command('mget',list,(err,result)=>{
@@ -82,25 +81,28 @@ module.exports={
 		})
 	},
 	myRide(user,limit,cb){
-		scan(0,`mysg:t:${user.id}:*`,limit,[],(err,cursor,list)=>{
+		scan(0,`mysg:tmr:${user.id}-*`,limit,[],(err,cursor,rides)=>{
 			if (err) return cb(err)
-			if (!list || !list.length) return cb(null, cursor, list)
-			const keys=[]
-			for(let i=0,l=list.length,k; i<l; i++){
-				k=list[i]
-				if (!k) continue
-				keys.push(`mysg:t:${k}`)
-			}
-			client.send_command('mget',keys,(err,result)=>{
+			if (!rides || !rides.length) return cb(null, cursor, rides)
+			client.send_command('mget',rides,(err,ids)=>{
 				if (err) return cb(err)
-				const output=[]
-				for(let i=0,l=result.length,r; i<l; i++){
-					r=result[i]
-					if (!r) continue
-					try { output.push(JSON.parse(r)) }
-					catch(ex) { return cb(ex)}
+				const keys=[]
+				for(let i=0,l=ids.length,k; i<l; i++){
+					k=ids[i]
+					if (!k) continue
+					keys.push(`mysg:t:${k}`)
 				}
-				return cb(null,cursor,output)
+				client.send_command('mget',keys,(err,result)=>{
+					if (err) return cb(err)
+					const output=[]
+					for(let i=0,l=result.length,r; i<l; i++){
+						r=result[i]
+						if (!r) continue
+						try { output.push(JSON.parse(r)) }
+						catch(ex) { return cb(ex)}
+					}
+					return cb(null,cursor,output)
+				})
 			})
 		})
 	},
@@ -136,18 +138,19 @@ module.exports={
 		.expireat(KEY_DATE,expireat)
 		.exec(cb)
 	},
-	// key= unixtime:userid
+	// key= unixtime-userid
 	join(user,trip,cb){
 		if (!user.id || !trip.id || !trip.date) return cb('invalid input')
 		const
 		id=trip.id,
 		datetime=Floor(trip.date/1000),
-		expireat=datetime+DAY1
+		expireat=datetime+DAY1,
+		KEY_RIDE=`mysg:tr:${id}`
 
 		client.multi()
-		.sadd(`mysg:tr:${id}`,user.id)
-		.expireat(KEY_TIME,expireat)
-		.set(`mysg:tmr:${user.id}:${Date.now()}`,id,'EX',expireat)
+		.sadd(KEY_RIDE,user.id)
+		.expireat(KEY_RIDE,expireat)
+		.set(`mysg:tmr:${user.id}-${Date.now()}`,id,'EX',expireat)
 		.exec(cb)
 	}
 }

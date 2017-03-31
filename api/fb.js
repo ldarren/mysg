@@ -17,7 +17,7 @@ parseEvts=function(evts,cb){
 	if (!evts.length) return cb()
 	const evt=evts.pop()
 
-	console.log('[%s] received- %s', (new Date(evt.timestamp)).toLocaleString(),JSON.stringify(evt))
+console.log('[%s] [parse]  %s', (new Date(evt.timestamp)).toISOString(), JSON.stringify(evt))
 
 	rdUser.get(evt.sender.id,(err,user)=>{
 		if (err) return cb(err)
@@ -25,15 +25,18 @@ parseEvts=function(evts,cb){
 			sigslot.signal('fb/addUser','custom',evt.sender,[])
 			return parseEvts(evts,cb)
 		}
-console.log(`parseEvt user: ${JSON.stringify(user)}`)
+console.log('[%s] [user]   %s', (new Date()).toISOString(), JSON.stringify(user))
+		if (evt.postback){
+			sigslot.signal('fb/postback','custom',user,[],evt)
+			return parseEvts(evts,cb)
+		}
 		rdAction.get(evt.sender.id,(err,action)=>{
 			if (err) return cb(err)
-console.log(`parseEvt action: ${JSON.stringify(action)}`)
+console.log('[%s] [action] %s', (new Date()).toISOString(), JSON.stringify(action))
 			if (!action || !action.length) {
 				sigslot.signal('fb/lostAt','custom',user,[],'Action')
 				return parseEvts(evts,cb)
 			}
-			if (evt.postback) sigslot.signal('fb/postback','custom',user,action,evt)
 			else sigslot.signal(`fb/add${action[action.length-1]}`,'custom',user,action,evt)
 			parseEvts(evts,cb)
 		})
@@ -53,7 +56,6 @@ send=function(obj,next){
 	const json=JSON.stringify(obj)
 	pico.ajax('POST',URL_MSG,json,HEADERS,(err,state,res)=>{
 		if (4!==state) return
-		if (err) console.log(JSON.stringify(err.src))
 		if (err) return next(this.error(err.code,`ko send[${json}] error[${err.src}]`))
 
 		this.log(`ok send[${json}] res[${res}]`)

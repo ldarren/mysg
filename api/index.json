@@ -28,7 +28,7 @@
 		],
 		"fb/postback":[
 			["fb","prepare",["user",":action","evt"]],
-			["common","$postback","user",":action","evt",":postback"]
+			["common","$postback","user",":action","evt"]
 		],
 		"fb/addUser":[
 			["fb","prepare",["user",":action"]],
@@ -212,7 +212,7 @@
 			["fb","spam",":msgs"]
 		],
 		"fb/join":[
-			["trip","join","user",":postback",":msgs"],
+			["trip","join","user",":action",":msgs"],
 			["fb","spam",":msgs"]
 		],
 		"fb/trip/cancel":[

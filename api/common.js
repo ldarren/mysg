@@ -51,13 +51,13 @@ return {
 			next()
 		})
 	},
-	$postback(user,action,evt,postback,next){
+	$postback(user,action,evt,next){
 		const payload = pObj.dotchain(evt,['postback','payload'])
 
 		if (!payload) return next(null,'fb/lostAt')
 
 		const [path,...rest]=payload.split(':')
-		postback.push(...rest)
+		action.push(...rest)
 		next(null,`fb/${path}`)
 	},
 	askAction(user,msg,next){
@@ -143,6 +143,8 @@ console.log('$compileAction',JSON.stringify(action))
 				if (null !== v) j.push(v);
 				switch(k.charAt(1)){
 				case '@': // date time
+					if (2===j.length) j[0]=j[0].split('T')[0] // get date part of 2017-03-31T09:27:19.731Z
+
 					v1=Date.parse(j.join(' '))-(user.timezone*HOUR1)
 					break
 				case '.': // string join
@@ -180,7 +182,7 @@ console.log('$compileAction',JSON.stringify(action))
 
 		for(let i=0,d; i<7; i++){
 			d=new Date((DAY1*i)+now)
-			replies.push(fb.quickTextReply(`${DAYS[d.getDay()]}:${d.getDate()}/${MONTHS[d.getMonth()]}/${d.getFullYear()}`,d.toLocaleDateString()))
+			replies.push(fb.quickTextReply(`${DAYS[d.getDay()]}:${d.getDate()}/${MONTHS[d.getMonth()]}/${d.getFullYear()}`,d.toISOString()))
 		}
 		Object.assign(msg, fb.message(
 			user,

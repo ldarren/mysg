@@ -73,7 +73,7 @@ return {
 console.log('addTrp.done',user,cmd)
 		rdTrip.set(user,cmd,(err)=>{
 			if (err) Object.assign(msg, fb.message(user,fb.text(`An error has encountered when adding your trip: ${err}.\ntype help for more action`)))
-			else Object.assign(msg, fb.message(user,fb.text(`New trip on ${(new Date(cmd.date)).toLocaleString()} has been added.\ntype help for more action`)))
+			else Object.assign(msg, fb.message(user,fb.text(`New trip on ${fb.toDateTime(user,cmd.date)} has been added.\ntype help for more action`)))
 			next()
 		})
 	}

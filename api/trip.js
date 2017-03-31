@@ -7,48 +7,50 @@ return {
 		cb()
 	},
 	myTrip(user,cmd,msg,next){
-		rdTrip.myTrip(user,4,(err,cursor,list)=>{
+		rdTrip.myTrip(user,4,(err,cursor,trips)=>{
 			if (err) return next(this.error(500,err))
+			let t
 
-			switch(list.length){
+			switch(trips.length){
 			case 0: Object.assign(msg,fb.message(user,fb.text('You have not created any trip yet'))); break
 			case 1:
+				t=trips[0]
 				Object.assign(msg,fb.message(
 					user,
 					fb.attachment(
 						fb.templateButton(
-							trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+(new Date(trip.date)).toLocaleString(),
+							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+fb.toDateTime(user,t.date),
 							[
-								fb.btnPostback('Detail','VIEW DETAIL'),,
-								fb.btnPostback('Passengers','VIEW_PASSENGER'),
-								fb.btnPostback('Back','ACTION')
+								fb.btnPostback('Detail','detail:'+t.id),
+								fb.btnPostback('Passengers','viewPassenger:'+t.id),
+								fb.btnPostback('Back','askAction')
 							]
 						)
 					)
 				))
 				break
 			default:
-				if (list.length > 4){
-					list=list.slice(0,4)
-					console.warn(`discarded ${list.length-4} trips`)
+				if (trips.length > 4){
+					trips=trips.slice(0,4)
+					console.warn(`discarded ${trips.length-4} trips`)
 				}
 				const
 				elements=[],
 				buttons=[]
 
-				for(let i=0,l; l=list[i]; i++){
+				for(let i=0; t=trips[i]; i++){
 					elements.push(fb.element(
-						l.pickup.join(',')+' > '+l.dropoff.join(','),
-						(new Date(l.date)).toLocaleString(),
+						t.pickup.join(',')+' > '+t.dropoff.join(','),
+						fb.toDateTime(user,t.date),
 						undefined,
 						[
-							fb.btnPostback('Detail','VIEW DETAIL')
+							fb.btnPostback('Detail','detail:'+t.id)
 						]
 					))
 				}
 
-				if (0==cursor) buttons.push(fb.btnPostback('Back','ACTION'))
-				else buttons.push(fb.btnPostback('View More','MORE_TRIP:'+cursor))
+				if (0==cursor) buttons.push(fb.btnPostback('Back','askAction'))
+				else buttons.push(fb.btnPostback('View More','moreTrip:'+cursor))
 
 				Object.assign(msg,fb.message(
 					user,
@@ -61,49 +63,51 @@ return {
 			next()
 		})
 	},
-	myRide(user,cmd,template,next){
-		rdTrip.myTrip(user,4,(err,cursor,list)=>{
+	myRide(user,cmd,msg,next){
+		rdTrip.myRide(user,4,(err,cursor,trips)=>{
 			if (err) return next(this.error(500,err))
+			let t
 
-			switch(list.length){
-			case 0: Object.assign(msg,fb.message(user,fb.text('You have not created any trip yet'))); break
+			switch(trips.length){
+			case 0: Object.assign(msg,fb.message(user,fb.text('You have not booked any trip yet'))); break
 			case 1:
+				t=trips[0]
 				Object.assign(msg,fb.message(
 					user,
 					fb.attachment(
 						fb.templateButton(
-							trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+(new Date(trip.date)).toLocaleString(),
+							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+fb.toDateTime(user,t.date),
 							[
-								fb.btnPostback('Detail','VIEW DETAIL'),,
-								fb.btnPostback('Passengers','VIEW_PASSENGER'),
-								fb.btnPostback('Back','ACTION')
+								fb.btnPostback('Detail','detail:'+t.id),
+								fb.btnPhoneNumber('Call Driver',t.contact),
+								fb.btnPostback('Back','askAction')
 							]
 						)
 					)
 				))
 				break
 			default:
-				if (list.length > 4){
-					list=list.slice(0,4)
-					console.warn(`discarded ${list.length-4} trips`)
+				if (trips.length > 4){
+					trips=trips.slice(0,4)
+					console.warn(`discarded ${trips.length-4} trips`)
 				}
 				const
 				elements=[],
 				buttons=[]
 
-				for(let i=0,l; l=list[i]; i++){
+				for(let i=0; t=trips[i]; i++){
 					elements.push(fb.element(
-						l.pickup.join(',')+' > '+l.dropoff.join(','),
-						(new Date(l.date)).toLocaleString(),
+						t.pickup.join(',')+' > '+t.dropoff.join(','),
+						fb.toDateTime(user,t.date),
 						undefined,
 						[
-							fb.btnPostback('Detail','VIEW DETAIL')
+							fb.btnPostback('Detail','detail:'+t.id)
 						]
 					))
 				}
 
-				if (0==cursor) buttons.push(fb.btnPostback('Back','ACTION'))
-				else buttons.push(fb.btnPostback('View More','MORE_TRIP:'+cursor))
+				if (0==cursor) buttons.push(fb.btnPostback('Back','askAction'))
+				else buttons.push(fb.btnPostback('View More','moreRide:'+cursor))
 
 				Object.assign(msg,fb.message(
 					user,
@@ -132,14 +136,14 @@ return {
 	},
 	foundTrips(user,trips,msgs,next){
 		switch(trips.length){
-		case 0: Object.assign(msg,fb.message(user,fb.text('No trip found on this date.\ntype help to search again'))); break
+		case 0: msgs.push(fb.message(user,fb.text('No trip found on this date.\ntype help to search again'))); break
 		default:
 			for(let i=0,t; t=trips[i]; i++){
 				msgs.push(fb.message(
 					user,
 					fb.attachment(
 						fb.templateButton(
-							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+(new Date(t.date)).toLocaleString(),
+							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+fb.toDateTime(user,t.date),
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPostback('Book','join:'+t.id),
@@ -153,10 +157,10 @@ return {
 		}
 		next()
 	},
-	join(user,postback,msgs,next){
-console.log('join',postback)
-		if (!postback || !postback.length) return next()
-		rdTrip.get(postback.pop(),(err, trip)=>{
+	join(user,action,msgs,next){
+console.log('join',action)
+		if (!action || !action.length) return next()
+		rdTrip.get(action.pop(),(err, trip)=>{
 			if (err) {
 				msgs.push(fb.message(user,fb.text('Error in joining trip, type help to try again')))
 				return next(this.error(500,err))

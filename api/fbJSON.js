@@ -1,4 +1,16 @@
+const
+HOUR1=1000*60*60
+
 return {
+	toDate(){
+		return (new Date(utc+user.timezone*HOUR1)).toLocaleDateString()
+	},
+	toTime(){
+		return (new Date(utc+user.timezone*HOUR1)).toLocaleTimeString()
+	},
+	toDateTime(user,utc){
+		return (new Date(utc+user.timezone*HOUR1)).toLocaleString()
+	},
 	message(user,message){
 		return {
 			recipient:{id:user.id},
@@ -15,8 +27,8 @@ return {
 		}
 	},
 	templateButton(text,buttons){
-		console.assert(buttons.length, 'button too few buttons')
-		console.assert(buttons.length<4, 'button too many buttons')
+		console.assert(buttons.length, 'button too few buttons:'+buttons)
+		console.assert(buttons.length<4, 'button too many buttons:'+buttons.length)
 
 		return {
 			template_type:'button',
@@ -31,9 +43,9 @@ return {
 		}
 	},
 	templateList(elements,buttons){
-		console.assert(elements.length, 'list too few elements')
-		console.assert(elements.length<5, 'list too many elements')
-		console.assert(buttons.length<2, 'list too many buttons')
+		console.assert(elements.length, 'list too few elements:'+elements)
+		console.assert(elements.length<5, 'list too many elements:'+elements.length)
+		console.assert(buttons.length<2, 'list too many buttons:'+buttons.length)
 
 		return {
 			template_type:'list',
