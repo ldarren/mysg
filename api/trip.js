@@ -1,3 +1,4 @@
+// https://github.com/wooorm/gemoji/blob/master/support.md
 const
 fb=require('api/fbJSON'),
 rdTrip=require('redis/trip'),
@@ -51,7 +52,7 @@ return {
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPostback('Passengers','viewPassenger:'+t.id),
-								fb.btnPostback('Back','askAction')
+								fb.btnPostback('Back','back:Action')
 							]
 						)
 					)
@@ -77,7 +78,7 @@ return {
 					))
 				}
 
-				if (0==cursor) buttons.push(fb.btnPostback('Back','askAction'))
+				if (0==cursor) buttons.push(fb.btnPostback('Back','back:Action'))
 				else buttons.push(fb.btnPostback('View More','moreTrip:'+cursor))
 
 				Object.assign(msg,fb.message(
@@ -108,7 +109,7 @@ return {
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPhoneNumber('Call Driver',t.contact),
-								fb.btnPostback('Back','askAction')
+								fb.btnPostback('Back','back:Action')
 							]
 						)
 					)
@@ -134,7 +135,7 @@ return {
 					))
 				}
 
-				if (0==cursor) buttons.push(fb.btnPostback('Back','askAction'))
+				if (0==cursor) buttons.push(fb.btnPostback('Back','back:Action'))
 				else buttons.push(fb.btnPostback('View More','moreRide:'+cursor))
 
 				Object.assign(msg,fb.message(
@@ -175,7 +176,7 @@ return {
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPostback('Book','join:'+t.id),
-								fb.btnPostback('Back','askAction')
+								fb.btnPostback('Back','back:Action')
 							]
 						)
 					)
@@ -195,7 +196,12 @@ console.log('join',action)
 			}
 			if (!trip) {
 				msgs.push(fb.message(user,fb.text('Trip already expired, type help to try again')))
-				return next(this.error(500,err))
+				return next()
+			}
+			trip.seat=parseInt(trip.seat)-1
+			if (!trip.seat) {
+				msgs.push(fb.message(user,fb.text('No more seat available, type help to try again')))
+				return next()
 			}
 			rdTrip.join(user,trip,(err)=>{
 				if (err) {
@@ -203,8 +209,18 @@ console.log('join',action)
 					return next(this.error(500,err))
 				}
 				msgs.push(fb.message(user,fb.text('You have join a trip, type help for further help')))
-				msgs.push(fb.message({id:trip.creator},fb.text(`${user.first_name} ${user.last_name} has joined of the trip you created, type help for more info`)))
-
+				msgs.push(fb.message(
+					user,
+					fb.attachment(
+						fb.templateButton(
+							`${user.first_name} ${user.last_name} has joined your trip\n${summary4Driver(user,trip)}`,
+							[
+								fb.btnPostback('Detail','detail:'+trip.id),
+								fb.btnPostback('Back','back:Action')
+							]
+						)
+					)
+				))
 				next()
 			})
 		})
@@ -225,7 +241,7 @@ console.log('join',action)
 					fb.templateButton(
 						detailView(user,trip),
 						[
-							fb.btnPostback('Back','askAction')
+							fb.btnPostback('Back','back:Action')
 						]
 					)
 				)

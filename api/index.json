@@ -122,7 +122,7 @@
 		],
 		"fb/addTripSeat":[
 			["fb","prepare",["user",":action","evt"]],
-			["common","readTextInputTo",":action","evt",["+$seat","ASK DRIVER"]],
+			["common","readTextInputTo",":action","evt",["+#seat","ASK DRIVER"]],
 			["common","nextStep","user",":action",["TripPrice"]]
 		],
 		"fb/askTripPrice|#prefix":[
@@ -218,6 +218,9 @@
 		"fb/detail":[
 			["trip","detail","user",":action","msg"],
 			["fb","send","msg"]
+		],
+		"fb/back":[
+			["common","back","user",":action"]
 		],
 		"fb/trip/cancel":[
 		],

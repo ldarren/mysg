@@ -148,6 +148,7 @@ module.exports={
 		KEY_RIDE=`mysg:tr:${id}`
 
 		client.multi()
+		.set(`mysg:t:${id}`,JSON.stringify(trip))
 		.sadd(KEY_RIDE,user.id)
 		.expireat(KEY_RIDE,expireat)
 		.set(`mysg:tmr:${user.id}-${Date.now()}`,id,'EX',expireat)

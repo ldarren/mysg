@@ -151,7 +151,7 @@ console.log('$compileAction',JSON.stringify(action))
 					v1=j.join(' ')
 					break
 				case '#': // number plus
-					v1=j.reduce((acc,val)=>{return acc+=val},0)
+					v1=j.reduce((acc,val)=>{return acc+=parseFloat(val)},0)
 					break
 				case '$': // immutable
 					v1=j[0]
@@ -174,6 +174,9 @@ console.log('$compileAction',JSON.stringify(action))
 			if (err) return next(this.error(500,err))
 			next(null,'fb/compileAction')
 		})
+	},
+	back(user,action,next){
+		nextStep(user,action,action.pop(),next);
 	},
 	askDate(user,msg,text,next){
 		const
