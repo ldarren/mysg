@@ -127,7 +127,7 @@
 		],
 		"fb/askTripPrice|#prefix":[
 			["fb","prepare",["user"]],
-			["common","createMsg","user","msg",["Pls add price per pax, e.g. SGD10 pax"]],
+			["common","createMsg","user","msg",["Pls add price per pax, e.g. SGD10"]],
 			["fb","send","msg"]
 		],
 		"fb/addTripPrice":[
@@ -214,6 +214,10 @@
 		"fb/join":[
 			["trip","join","user",":action",":msgs"],
 			["fb","spam",":msgs"]
+		],
+		"fb/detail":[
+			["trip","detail","user",":action","msg"],
+			["fb","send","msg"]
 		],
 		"fb/trip/cancel":[
 		],

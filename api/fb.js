@@ -2,7 +2,7 @@ const
 rdAction=require('redis/action'),
 rdUser=require('redis/user'),
 EXPIRY=1000*60*60*24*30,
-HEADERS={headers:{'Content-Type':'application/json; charset=UTF-8'}},
+HEADERS={headers:{'Content-Type':'application/json'}},
 entryQ=[],
 parseEntries=function(entries,cb){
 	if (!entries.length) return cb()

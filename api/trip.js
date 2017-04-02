@@ -1,23 +1,33 @@
 const
 fb=require('api/fbJSON'),
 rdTrip=require('redis/trip'),
-detail4Driver=function(user,trip){
-	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+detailView=function(user,trip){
+	return	'\uD83D\uDD56 '+fb.toDateTime(user,trip.date)+'\n'+
+			'\uD83D\uDEEB '+trip.pickup.join(', ')+'\n'+
+			'\uD83D\uDEEC '+trip.dropoff.join(', ')+'\n'+
+			'\uD83D\uDCB5 '+trip.price+'\n'+
+			'\uD83D\uDCBA '+trip.seat+'\n'+
+			'\uD83D\uDCDE '+trip.contact+'\n'+
+			'\uD83D\uDCDD '+trip.note
 },
 title4Driver=function(user,trip){
-	return fb.toDate(user,trip.date)
+	const title=trip.note
+	if (!title || 'NA'===title) return fb.toDateTime(user,trip.date)
+	return title
 },
 summary4Driver=function(user,trip){
-	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
-},
-detail4Passenger=function(user,trip){
-	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+	return	'\uD83D\uDD56 '+fb.toDateTime(user,trip.date)+'\n'+
+			'\uD83D\uDCBA '+trip.seat
 },
 title4Passenger=function(user,trip){
-	return fb.toDate(user,trip.date)
+	const title=trip.note
+	if (!title || 'NA'===title) return fb.toDateTime(user,trip.date)
+	return title
 },
 summary4Passenger=function(user,trip){
-	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+	return	'\uD83D\uDD56 '+fb.toDateTime(user,trip.date)+'\n'+
+			'\uD83D\uDEEB '+trip.pickup.join(', ')+'\n'+
+			'\uD83D\uDEEC '+trip.dropoff.join(', ')
 }
 
 return {
@@ -161,7 +171,7 @@ return {
 					user,
 					fb.attachment(
 						fb.templateButton(
-							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+fb.toDateTime(user,t.date),
+							summary4Passenger(user,t),
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPostback('Book','join:'+t.id),
@@ -197,6 +207,30 @@ console.log('join',action)
 
 				next()
 			})
+		})
+	},
+	detail(user,action,msg,next){
+		rdTrip.get(action.pop(),(err, trip)=>{
+			if (err) {
+				msgs.push(fb.message(user,fb.text('Error in reading tip info, type help to try again')))
+				return next(this.error(500,err))
+			}
+			if (!trip) {
+				msgs.push(fb.message(user,fb.text('Trip already expired, type help to try again')))
+				return next(this.error(500,err))
+			}
+			Object.assign(msg,fb.message(
+				user,
+				fb.attachment(
+					fb.templateButton(
+						detailView(user,trip),
+						[
+							fb.btnPostback('Back','askAction')
+						]
+					)
+				)
+			))
+			next()
 		})
 	}
 }
