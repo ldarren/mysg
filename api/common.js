@@ -143,9 +143,12 @@ console.log('$compileAction',JSON.stringify(action))
 				if (null !== v) j.push(v);
 				switch(k.charAt(1)){
 				case '@': // date time
-					if (2===j.length) j[0]=j[0].split('T')[0] // get date part of 2017-03-31T09:27:19.731Z
-
-					v1=Date.parse(j.join(' '))-(user.timezone*HOUR1)
+					if (1===j.length){
+						v1=Date.parse(j[0]) // no time component, so not timezone offset
+					}else{
+						j[0]=j[0].split('T')[0] // get date part of 2017-03-31T09:27:19.731Z
+						v1=Date.parse(j.join(' '))-(user.timezone*HOUR1)
+					}
 					break
 				case '.': // string join
 					v1=j.join(' ')

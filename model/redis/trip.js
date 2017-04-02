@@ -129,7 +129,7 @@ module.exports={
 		trip.creator=creator
 		trip.id=id
 
-		client.batch()
+		client.multi()
 		.set(KEY_TRIP,JSON.stringify(trip))
 		.expireat(KEY_TRIP,expireat)
 		.sadd(KEY_TIME,KEY_TRIP)
@@ -153,5 +153,8 @@ module.exports={
 		.expireat(KEY_RIDE,expireat)
 		.set(`mysg:tmr:${user.id}-${Date.now()}`,id,'EX',expireat)
 		.exec(cb)
+	},
+	passenger(trip,cb){
+		client.smembers(`mysg:tr:${trip.id}`,cb)
 	}
 }

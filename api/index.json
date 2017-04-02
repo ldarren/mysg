@@ -219,6 +219,10 @@
 			["trip","detail","user",":action","msg"],
 			["fb","send","msg"]
 		],
+		"fb/passenger":[
+			["trip","passenger","user",":action",":msgs"],
+			["fb","spam",":msgs"]
+		],
 		"fb/back":[
 			["common","back","user",":action"]
 		],

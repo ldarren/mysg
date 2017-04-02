@@ -4,12 +4,12 @@ fb=require('api/fbJSON'),
 rdTrip=require('redis/trip'),
 detailView=function(user,trip){
 	return	'\uD83D\uDD56 '+fb.toDateTime(user,trip.date)+'\n'+
-			'\uD83D\uDEEB '+trip.pickup.join(', ')+'\n'+
-			'\uD83D\uDEEC '+trip.dropoff.join(', ')+'\n'+
-			'\uD83D\uDCB5 '+trip.price+'\n'+
+			'\ud83d\ude90 '+trip.pickup.join(', ')+'\n'+
+			'\ud83c\udfc1 '+trip.dropoff.join(', ')+'\n'+
+			'\ud83d\udcb2 '+trip.price+'\n'+
 			'\uD83D\uDCBA '+trip.seat+'\n'+
 			'\uD83D\uDCDE '+trip.contact+'\n'+
-			'\uD83D\uDCDD '+trip.note
+			'\u270d\ufe0f '+trip.note
 },
 title4Driver=function(user,trip){
 	const title=trip.note
@@ -27,8 +27,8 @@ title4Passenger=function(user,trip){
 },
 summary4Passenger=function(user,trip){
 	return	'\uD83D\uDD56 '+fb.toDateTime(user,trip.date)+'\n'+
-			'\uD83D\uDEEB '+trip.pickup.join(', ')+'\n'+
-			'\uD83D\uDEEC '+trip.dropoff.join(', ')
+			'\ud83d\ude90 '+trip.pickup.join(', ')+'\n'+
+			'\ud83c\udfc1 '+trip.dropoff.join(', ')
 }
 
 return {
@@ -51,7 +51,7 @@ return {
 							summary4Driver(user,t),
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
-								fb.btnPostback('Passengers','viewPassenger:'+t.id),
+								fb.btnPostback('Passengers','passenger:'+t.id),
 								fb.btnPostback('Back','back:Action')
 							]
 						)
@@ -233,7 +233,7 @@ console.log('join',action)
 			}
 			if (!trip) {
 				msgs.push(fb.message(user,fb.text('Trip already expired, type help to try again')))
-				return next(this.error(500,err))
+				return next()
 			}
 			Object.assign(msg,fb.message(
 				user,
@@ -241,12 +241,48 @@ console.log('join',action)
 					fb.templateButton(
 						detailView(user,trip),
 						[
+							'driver'===user.role ? fb.btnPostback('Passengers','passenger:'+trip.id) : fb.btnPhoneNumber('Call Driver',trip.contact),
 							fb.btnPostback('Back','back:Action')
 						]
 					)
 				)
 			))
 			next()
+		})
+	},
+	passenger(user,action,msgs,next){
+		rdTrip.passenger(action.pop(),(err, userIds)=>{
+			if (err) {
+				msgs.push(fb.message(user,fb.text('Error in reading passengers, type help to try again')))
+				return next(this.error(500,err))
+			}
+			if (!userIds || !userIds.length) {
+				msgs.push(fb.message(user,fb.text('You have no passenger yet, type help to try again')))
+				return next()
+			}
+			rdUser.gets(userIds,(err,users)=>{
+				if (err) {
+					msgs.push(fb.message(user,fb.text('Error in reading passengers, type help to try again')))
+					return next(this.error(500,err))
+				}
+				const elements=[]
+				for(let i=0,u; u=users[i]; i++){
+					elements.push(fb.element(
+						`${u.first_name} ${u.last_name}`,
+						`${u.gender}, ${u.locale}`,
+						undefined,
+						undefined,
+						u.profile_pic
+					))
+				}
+				Object.assign(msg,fb.message(
+					user,
+					fb.attachment(
+						fb.templateGeneric(elements)
+					)
+				))
+				next()
+			})
 		})
 	}
 }
