@@ -2,7 +2,7 @@ const
 rdAction=require('redis/action'),
 rdUser=require('redis/user'),
 EXPIRY=1000*60*60*24*30,
-HEADERS={headers:{'Content-Type':'application/json'}},
+HEADERS={headers:{'Content-Type':'application/json; charset=UTF-8'}},
 entryQ=[],
 parseEntries=function(entries,cb){
 	if (!entries.length) return cb()
@@ -56,7 +56,7 @@ send=function(obj,next){
 	const json=JSON.stringify(obj)
 	pico.ajax('POST',URL_MSG,json,HEADERS,(err,state,res)=>{
 		if (4!==state) return
-		if (err) return next(this.error(err.code,`ko send[${json}] error[${err.src}]`))
+		if (err) return next(this.error(err.code,`ko send[${json}] error[${err.error}] res[${res}]`))
 
 		this.log(`ok send[${json}] res[${res}]`)
 		next()

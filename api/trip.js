@@ -1,6 +1,24 @@
 const
 fb=require('api/fbJSON'),
-rdTrip=require('redis/trip')
+rdTrip=require('redis/trip'),
+detail4Driver=function(user,trip){
+	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+},
+title4Driver=function(user,trip){
+	return fb.toDate(user,trip.date)
+},
+summary4Driver=function(user,trip){
+	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+},
+detail4Passenger=function(user,trip){
+	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+},
+title4Passenger=function(user,trip){
+	return fb.toDate(user,trip.date)
+},
+summary4Passenger=function(user,trip){
+	return trip.pickup.join(',')+' > '+trip.dropoff.join(',')+'\n'+fb.toDateTime(user,trip.date)
+}
 
 return {
 	setup(context,cb){
@@ -19,7 +37,7 @@ return {
 					user,
 					fb.attachment(
 						fb.templateButton(
-							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+fb.toDateTime(user,t.date),
+							summary4Driver(user,t),
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPostback('Passengers','viewPassenger:'+t.id),
@@ -40,8 +58,8 @@ return {
 
 				for(let i=0; t=trips[i]; i++){
 					elements.push(fb.element(
-						t.pickup.join(',')+' > '+t.dropoff.join(','),
-						fb.toDateTime(user,t.date),
+						title4Driver(user,t),
+						summary4Driver(user,t),
 						undefined,
 						[
 							fb.btnPostback('Detail','detail:'+t.id)
@@ -76,7 +94,7 @@ return {
 					user,
 					fb.attachment(
 						fb.templateButton(
-							t.pickup.join(',')+' > '+t.dropoff.join(',')+'\n'+fb.toDateTime(user,t.date),
+							summary4Passenger(user,t),
 							[
 								fb.btnPostback('Detail','detail:'+t.id),
 								fb.btnPhoneNumber('Call Driver',t.contact),
@@ -97,8 +115,8 @@ return {
 
 				for(let i=0; t=trips[i]; i++){
 					elements.push(fb.element(
-						t.pickup.join(',')+' > '+t.dropoff.join(','),
-						fb.toDateTime(user,t.date),
+						title4Passenger(user,t),
+						summary4Passenger(user,t),
 						undefined,
 						[
 							fb.btnPostback('Detail','detail:'+t.id)
