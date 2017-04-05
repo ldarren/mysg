@@ -2,6 +2,7 @@
 const
 fb=require('api/fbJSON'),
 rdTrip=require('redis/trip'),
+rdUser=require('redis/user'),
 detailView=function(user,trip){
 	return	'\uD83D\uDD56 '+fb.toDateTime(user,trip.date)+'\n'+
 			'\ud83d\ude90 '+trip.pickup.join(', ')+'\n'+
@@ -275,7 +276,7 @@ console.log('join',action)
 						u.profile_pic
 					))
 				}
-				Object.assign(msg,fb.message(
+				msgs.push(fb.message(
 					user,
 					fb.attachment(
 						fb.templateGeneric(elements)

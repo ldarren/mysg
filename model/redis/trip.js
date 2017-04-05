@@ -154,7 +154,7 @@ module.exports={
 		.set(`mysg:tmr:${user.id}-${Date.now()}`,id,'EX',expireat)
 		.exec(cb)
 	},
-	passenger(trip,cb){
-		client.smembers(`mysg:tr:${trip.id}`,cb)
+	passenger(id,cb){
+		client.smembers(`mysg:tr:${id}`,cb)
 	}
 }
