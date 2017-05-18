@@ -1,0 +1,22 @@
+{
+    "app":{
+        "paths":{
+            "~":"http://localhost/sandbox/mysg/",
+            "api": "http://localhost/sandbox/mysg/api/",
+            "redis": "http://localhost/sandbox/mysg/model/redis/"
+        }
+    },
+    "mods":{
+        "webServer":{
+            "mod":"web",
+            "allowOrigin":"*",
+            "sep":["&"],
+            "uploadWL":[]
+        },
+        "mysgRD":{
+            "mod":"redis",
+			"instance":"small",
+            "options":{}
+        }
+    }
+}

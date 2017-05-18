@@ -1,0 +1,20 @@
+{
+    "app":{
+        "actions": [
+            "node_modules/picos/apps/pico/index.json"
+        ]
+    },
+    "mods":{
+        "webServer":{
+            "mod":"web",
+            "allowOrigin":"*",
+            "delimiter":["&"],
+            "uploadWL":[],
+            "port":4888
+        },
+        "appMgr":{
+            "mod":"appMgr",
+            "path":"build"
+        }
+    }
+}

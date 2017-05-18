@@ -1,0 +1,28 @@
+{
+  "name": "mysg",
+  "version": "0.1.0",
+  "description": "mysg carpool facebook bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ldarren/mysg.git"
+  },
+  "keywords": [
+    "facebook",
+    "bot",
+    "carpool"
+  ],
+  "author": "Darren Liew",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ldarren/mysg/issues"
+  },
+  "homepage": "https://github.com/ldarren/mysg#readme",
+  "dependencies": {
+    "picos": "^0.4.0",
+    "picos-mod-redis": "^0.1.0"
+  }
+}
