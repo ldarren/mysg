@@ -13,7 +13,8 @@
             "mod":"web",
             "allowOrigin":"*",
             "sep":["&"],
-            "uploadWL":[]
+            "uploadWL":[],
+            "port":4888
         },
         "mysgRD":{
             "mod":"picos-mod-redis",
